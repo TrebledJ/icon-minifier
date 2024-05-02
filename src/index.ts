@@ -253,6 +253,8 @@ function mapIconsToCodepoints(icons: Icon[], classToCodepoint: Map<string, numbe
 //   return matches;
 // }
 
+const FONT_AWESOME_CSS_FILE_REGEX = /(?<=")https?:\/\/[^"]*font-awesome[^"]*.css(?=")/;
+
 // <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 /**
  * @param file HTML file to search for a known CSS webfont.
@@ -261,7 +263,7 @@ function mapIconsToCodepoints(icons: Icon[], classToCodepoint: Map<string, numbe
 function findWebFont(file: string): string | undefined {
   const content = fs.readFileSync(file, 'utf8').toString();
   // Search for font-awesome link.
-  const match = content.match(/(?<=")https?:\/\/[^"]*font-awesome[^"]*.css(?=")/);
+  const match = content.match(FONT_AWESOME_CSS_FILE_REGEX);
   return match?.[0];
 }
 
@@ -387,34 +389,39 @@ async function minify(directory: string) {
   }
 
   // Generate the WOFF2 / TTF.
-  const outputFolder = 'output';
+  const relativeCssFolder = 'css'; // CSS folder to deposit new CSS asset, relative to the site directory.
+  const outputCssFolder = path.join(directory, relativeCssFolder);
+  const outputFontFolder = path.join(directory, 'webfonts');
   const outputFilename = 'icons';
-  if (!fs.existsSync(outputFolder)) {
-    fs.mkdirSync(outputFolder);
+  if (!fs.existsSync(outputCssFolder)) {
+    fs.mkdirSync(outputCssFolder);
   }
 
   const bufferOutWoff2 = finalFontasy!.write({
     toBuffer: true,
     type: 'woff2',
   });
-  fs.writeFileSync(path.join(outputFolder, outputFilename + '.woff2'), bufferOutWoff2);
+  fs.writeFileSync(path.join(outputFontFolder, outputFilename + '.woff2'), bufferOutWoff2);
 
   const bufferOutTtf = finalFontasy!.write({
     toBuffer: true,
     type: 'ttf',
   });
-  fs.writeFileSync(path.join(outputFolder, outputFilename + '.ttf'), bufferOutTtf);
+  fs.writeFileSync(path.join(outputFontFolder, outputFilename + '.ttf'), bufferOutTtf);
 
   // Generate CSS.
   // TODO: revise generated css, remove unused classes.
+  // TODO: generalise font family.
+  const relativePathToFontFolder = path.relative(outputCssFolder, outputFontFolder);
   let newCss = fs.readFileSync('template.css').toString();
   newCss += `
 @font-face {
   font-family: "Font Awesome 6 Custom";
   font-display: block;
-  src: url(../webfonts/${outputFilename}.woff2) format("woff2"), url(../webfonts/${outputFilename}.ttf) format("truetype")
+  src: url(${relativePathToFontFolder}/${outputFilename}.woff2) format("woff2"), url(${relativePathToFontFolder}/${outputFilename}.ttf) format("truetype")
 }`;
 
+  // TODO: generalise prefix.
   const prefix = 'fa-';
 
   for (const icon of icons) {
@@ -433,9 +440,17 @@ async function minify(directory: string) {
     newCss += css;
   }
 
-  fs.writeFileSync(path.join(outputFolder, outputFilename + '.css'), newCss);
+  fs.writeFileSync(path.join(outputCssFolder, outputFilename + '.css'), newCss);
   console.log("new css:");
   console.log(newCss);
+
+  // Iterate over HTML files and replace the original CSS link with the new CSS.
+  // TODO: add option to replace CSS <link> in HTML files.
+  for (const file of extractor.fileMap['html']) {
+    const contents = fs.readFileSync(file).toString();
+    const newContents = contents.replace(FONT_AWESOME_CSS_FILE_REGEX, `/${relativeCssFolder}/${outputFilename}.css`);
+    fs.writeFileSync(file, newContents);
+  }
 };
 
 module.exports = minify;
