@@ -253,7 +253,7 @@ function mapIconsToCodepoints(icons: Icon[], classToCodepoint: Map<string, numbe
 //   return matches;
 // }
 
-const FONT_AWESOME_CSS_FILE_REGEX = /(?<=")https?:\/\/[^"]*font-awesome[^"]*.css(?=")/;
+const FONT_AWESOME_CSS_FILE_REGEX = /(?<=")[^"]*font-?awesome[^"]*.css(?=")/;
 
 // <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 /**
