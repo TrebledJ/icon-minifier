@@ -128,7 +128,7 @@ class Icon {
     }
 }
 const iconMinifierDefaultOptions = Object.freeze({
-    crawlExtensions: ['html'],
+    exts: ['html'],
     cacheOnlineFiles: true,
     outputFilename: 'icons',
     outputCssFolder: './css',
@@ -338,24 +338,23 @@ class CSSParser {
             if (trimmed === '@font-face') {
                 const family = getFontFamily(node.body);
                 if (!family) {
-                    console.warn("Skipping @font-face without `font-family`\n" + node.body);
+                    console.warn(chalk.yellow("Skipping @font-face without `font-family`."));
                     continue;
                 }
                 const style = getFontStyle(node.body);
                 if (!style) {
-                    console.warn("Skipping @font-face without `font-style`\n" + node.body);
+                    console.warn(chalk.yellow("Skipping @font-face without `font-style`."));
                     continue;
                 }
                 const weight = getFontWeight(node.body);
                 if (!weight) {
-                    console.warn("Skipping @font-face without `font-weight`\n" + node.body);
+                    console.warn(chalk.yellow("Skipping @font-face without `font-weight`."));
                     continue;
                 }
                 const ff = new FontFace(family, style, weight);
                 const srcs = getFontSrcs(node.body);
                 ff.srcs = srcs;
                 // Assume matches are filenames and resolve relative paths.
-                // ff.srcs = ff.srcs.map(m => isRelativePath(m) ? path.join(path.dirname(this.filename), m) : m);
                 ff.srcs = ff.srcs.map(m => CSSParser.getRelativeFile(this.filename, m));
                 fontFaces.push(ff);
             }
@@ -363,7 +362,6 @@ class CSSParser {
                 // pass.
             }
             else {
-                // console.log("parsing selector: " + node.selector);
                 const sel = parseCssSelector(node.selector);
                 for (const rule of sel.rules) {
                     if (rule.type === 'Rule') {
@@ -583,8 +581,6 @@ class FontManager {
         font.get().glyf = glyfs;
         return [font, newCodepointsToClasses];
     }
-    save(font) {
-    }
 }
 export class IconMinifier {
     constructor(directory, options = iconMinifierDefaultOptions) {
@@ -595,7 +591,7 @@ export class IconMinifier {
             if (opts[opt] === undefined)
                 opts[opt] = iconMinifierDefaultOptions[opt];
         }
-        console.log("Extensions: " + this.options.crawlExtensions.join(', '));
+        console.log("Extensions: " + this.options.exts.join(', '));
     }
     /**
      * 1. Crawl static files locating icon CSS files.
@@ -631,7 +627,7 @@ export class IconMinifier {
         const crawler = new Crawler();
         const fontManager = new FontManager();
         // 1.
-        crawler.indexFiles(this.directory, this.options.crawlExtensions);
+        crawler.indexFiles(this.directory, this.options.exts);
         const cssFiles = crawler.findCssFiles(['html']);
         if (cssFiles.length === 0) {
             console.log(`No css files found. Nothing to do.`);
@@ -660,9 +656,10 @@ export class IconMinifier {
                 }
             }
             // 4.
-            const unparsedIcons = crawler.findIcons(prefix, this.options.crawlExtensions, nonPrefixClasses);
+            const unparsedIcons = crawler.findIcons(prefix, this.options.exts, nonPrefixClasses);
             // 5.
             const icons = unparsedIcons.map(u => Icon.parse(u, iconClasses));
+            console.log(chalk.blue(`Parsed ${icons.length} unique icons.`));
             // 6.
             const [font, newCodepointsToClasses] = await fontManager.minify(icons, iconToCodepoint);
             const fontFiles = this.generateFont(font);
@@ -670,10 +667,27 @@ export class IconMinifier {
             const usedClasses = new Set(icons.map(icon => [icon.name, ...icon.modifiers]).flat());
             const nonIconUsedClasses = new Set(specialClasses.filter(cls => usedClasses.has(cls)));
             // 8.
-            const newCssFile = this.generateCss(cssParser, fontManager, fontFiles, nonIconUsedClasses, newCodepointsToClasses);
+            const newCss = this.generateCss(cssParser, fontManager, fontFiles, nonIconUsedClasses, newCodepointsToClasses);
+            const newCssFile = this.saveCss(newCss);
             // 9.
             const relativeNewCssFile = path.relative(this.directory, newCssFile);
             crawler.replaceCssLinkss(['html'], cssFile, relativeNewCssFile);
+            console.log("Done!");
+            // 10. Stats.
+            let oldFontBytes = 0;
+            for (const ff of fontManager.ffs) {
+                const len = ff.font.write({ toBuffer: true, type: "woff2" }).byteLength;
+                oldFontBytes += len;
+            }
+            const newFontBytes = font.write({ toBuffer: true, type: "woff2" }).byteLength;
+            console.log(chalk.blue(`Font:`));
+            console.log(chalk.blue(`\tBefore: ${oldFontBytes}`));
+            console.log(chalk.blue(`\tAfter:  ${newFontBytes} (saved ${Math.floor((oldFontBytes - newFontBytes) * 1000 / oldFontBytes) / 10}%)`));
+            const oldCssBytes = css.length;
+            const newCssBytes = newCss.length;
+            console.log(chalk.blue(`CSS:`));
+            console.log(chalk.blue(`\tBefore: ${oldCssBytes}`));
+            console.log(chalk.blue(`\tAfter:  ${newCssBytes} (saved ${Math.floor((oldCssBytes - newCssBytes) * 1000 / oldCssBytes) / 10}%)`));
         }
     }
     /**
@@ -702,7 +716,7 @@ export class IconMinifier {
         const fam = this.options.outputFontFamily;
         const outputCssFolder = this.options.outputCssFolder;
         const outputFontFolder = this.options.outputFontFolder;
-        const outputFilename = this.options.outputFilename;
+        // const outputFilename = this.options.outputFilename!;
         const relativePathToFontFolder = path.relative(outputCssFolder, outputFontFolder);
         const format = {
             ".woff2": "woff2",
@@ -718,7 +732,6 @@ export class IconMinifier {
             font-display: block;
             src: ${srcs.join(', ')}
         }`;
-        // src: url(${relativePathToFontFolder}/${outputFilename}.woff2) format("woff2"), url(${relativePathToFontFolder}/${outputFilename}.ttf) format("truetype")
         // Font classes.
         const sel = fontManager.ffs.map(ff => ff.clss.map(c => `.${c}`)).flat().join(', ');
         css += `
@@ -748,9 +761,15 @@ export class IconMinifier {
             `;
         });
         const minifiedCss = new CleanCSS({}).minify(css).styles;
+        return minifiedCss;
+    }
+    saveCss(css) {
+        const outputCssFolder = this.options.outputCssFolder;
+        const outputFontFolder = this.options.outputFontFolder;
+        const outputFilename = this.options.outputFilename;
         const outputFile = path.join(this.directory, outputCssFolder, outputFilename + '.css');
         console.log(`Writing css to ${outputFile}...`);
-        fs.writeFileSync(outputFile, minifiedCss);
+        fs.writeFileSync(outputFile, css);
         return outputFile;
     }
 }
