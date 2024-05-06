@@ -175,7 +175,7 @@ export type IconMinifierOptions = {
     outputCssFolder?: string,
     outputFontFolder?: string,
     outputFontFamily?: string,
-    replaceCssLink?: boolean,
+    replaceCssLinks?: boolean,
 };
 
 const iconMinifierDefaultOptions = Object.freeze({
@@ -185,7 +185,7 @@ const iconMinifierDefaultOptions = Object.freeze({
     outputCssFolder: './css',
     outputFontFolder: './webfonts',
     outputFontFamily: 'Custom Minified Font',
-    replaceCssLink: false,
+    replaceCssLinks: false,
 });
 
 class Crawler {
@@ -281,7 +281,7 @@ class Crawler {
         }
     }
 
-    replaceCssLinks(exts: string[], oldUrl: string, newUrl: string): void {
+    replaceCssLinkss(exts: string[], oldUrl: string, newUrl: string): void {
         this.checkIfIndexed(exts);
 
         for (const ext of exts) {
@@ -839,7 +839,7 @@ export class IconMinifier {
 
             // 9.
             const relativeNewCssFile = path.relative(this.directory, newCssFile);
-            crawler.replaceCssLinks(['html'], cssFile, relativeNewCssFile);
+            crawler.replaceCssLinkss(['html'], cssFile, relativeNewCssFile);
         }
     }
 
