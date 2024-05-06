@@ -1,3 +1,5 @@
+#!/usr/local/bin/node
+
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { IconMinifier, IconMinifierOptions } from './minifier.js';
