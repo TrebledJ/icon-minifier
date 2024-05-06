@@ -13,7 +13,7 @@ async function main() {
         .option('--output-css-folder <folder>', 'Specify output CSS folder')
         .option('--output-font-folder <folder>', 'Specify output font folder')
         .option('--output-font-family <font-family>', 'Specify output font family')
-        .option('--replace-css-link', 'Replace existing CSS link tags')
+        .option('--replace-css-links', 'Replace existing CSS link tags')
         .action(async (directory, options) => {
         const minifier = new IconMinifier(directory, options);
         try {
