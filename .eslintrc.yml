@@ -1,0 +1,52 @@
+env:
+  browser: true
+  commonjs: true
+  es2021: true
+  node: true
+  jquery: true
+  jest: true
+extends: airbnb-base
+parserOptions:
+  ecmaVersion: latest
+rules:
+  max-len:
+    - error
+    - code: 120
+  no-plusplus: off
+  nonblock-statement-body-position: [warn, below]
+  # curly: [warn, multi-or-nest, consistent]
+  curly: [off]
+  no-use-before-define: [error, nofunc]
+  no-mixed-operators:
+    - error
+    - allowSamePrecedence: true
+  no-param-reassign: off
+  no-shadow:
+    - error
+    - allow:
+      - eleventyConfig
+  no-console:
+    - warn
+    - allow: [warn, error]
+  import/no-extraneous-dependencies:
+    - error
+    - devDependencies: true
+  no-unused-vars:
+    - error
+    - argsIgnorePattern: "^_"
+      varsIgnorePattern: "^_"
+      caughtErrorsIgnorePattern: "^_"
+  arrow-parens: [warn, as-needed]
+  no-continue: off
+  no-restricted-syntax: [off, ForOfStatement]
+  func-names: off # Dangerous! Don't turn on! Breaks behaviour of `this`.
+  quotes:
+    - warn
+    - single
+    - avoidEscape: true
+  guard-for-in: off
+  no-multi-assign: off
+  no-new: off
+  no-lonely-if: off
+  prefer-destructuring: off
+  prefer-arrow-callback: off
