@@ -16,7 +16,6 @@ async function main() {
         .option('--replace-css-links', 'Replace existing CSS link tags')
         .action(async (directory, options) => {
         const minifier = new IconMinifier(directory, options);
-        console.log("Options: " + JSON.stringify(options));
         try {
             await minifier.minify();
         }

@@ -835,9 +835,10 @@ export class IconMinifier {
 
             // 9.
             const relativeNewCssFile = path.relative(this.directory, newCssFile);
-            crawler.replaceCssLinkss(['html'], cssFile, relativeNewCssFile);
+            crawler.replaceCssLinkss(['html'], cssFile, '/' + relativeNewCssFile);
 
             console.log("Done!");
+
             // 10. Stats.
             let oldFontBytes = 0;
             for (const ff of fontManager.ffs) {
@@ -930,7 +931,9 @@ export class IconMinifier {
         // Special classes.
         cssParser.ast.children.forEach(node => {
             // If the selector uses any non-icon and seen classes, then include the rule.
-            if (CSSParser.getClassesFromSelector(node.selector).some(cls => nonIconUsedClasses.has(cls))) {
+            // And exclude any rules which modify main font props.
+            if (CSSParser.getClassesFromSelector(node.selector).some(cls => nonIconUsedClasses.has(cls))
+                && !node.body.match(/font-(family|style|weight)/)) {
                 css += `\n${node.selector}{${node.body}}\n`;
             }
         });
