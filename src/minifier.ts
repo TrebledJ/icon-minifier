@@ -745,6 +745,8 @@ export class IconMinifier {
             if (opts[opt] === undefined)
                 opts[opt] = (<{[x:string]:any}>iconMinifierDefaultOptions)[opt];
         }
+
+        console.log("Extensions: " + this.options.crawlExtensions!.join(', '));
     }
 
     /**
