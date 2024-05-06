@@ -16,6 +16,7 @@ async function main() {
         .option('--output-font-folder <folder>', 'Specify output font folder')
         .option('--output-font-family <font-family>', 'Specify output font family')
         .option('--replace-css-links', 'Replace existing CSS link tags')
+        .option('--cache-bust', 'Append a file hash to the file name, to allow for cache-busting and long cache durations.')
         .action(async (directory: string, options: IconMinifierOptions) => {
             const minifier = new IconMinifier(directory, options);
             try {

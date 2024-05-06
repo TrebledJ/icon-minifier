@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Font, FontEditor, woff2, TTF } from 'fonteditor-core';
 import chalk from 'chalk';
+import crypto from 'crypto';
 
 import Parser from 'css-simple-parser';
 import { createParser } from 'css-selector-parser';
@@ -38,6 +39,9 @@ function intersection<T>(a: T[], ...args: T[][]): T[] {
     return a.filter(e => sets.every(a2 => a2.has(e)));
 }
 
+function md5(str: string | Buffer): string {
+    return crypto.createHash('md5').update(str).digest('hex');
+}
 
 const FONT_STYLES = ['normal', 'italic'] as const;
 const FONT_STYLES_REGEX = new RegExp(`font-style:\s*(${FONT_STYLES.join('|')})`);
@@ -176,6 +180,9 @@ export type IconMinifierOptions = {
     outputFontFolder?: string,
     outputFontFamily?: string,
     replaceCssLinks?: boolean,
+
+    // Adds a filehash at the end of filenames.
+    cacheBust?: boolean,
 };
 
 const iconMinifierDefaultOptions = Object.freeze({
@@ -186,6 +193,7 @@ const iconMinifierDefaultOptions = Object.freeze({
     outputFontFolder: './webfonts',
     outputFontFamily: 'Custom Minified Font',
     replaceCssLinks: false,
+    cacheBust: false,
 });
 
 class Crawler {
@@ -869,13 +877,23 @@ export class IconMinifier {
         const types = ['woff2', 'ttf'] as const;
 
         const files: string[] = [];
+
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
         
         for (const type of types) {
             const buffer = finalFontasy.write({
                 toBuffer: true,
                 type,
             });
-            const file = `${outputFilename}.${type}`;
+            
+            let outputFilenameWithHash = outputFilename;
+            if (this.options.cacheBust) {
+                outputFilenameWithHash += '-' + md5(buffer).slice(0, 16);
+            }
+
+            const file = `${outputFilenameWithHash}.${type}`;
             console.log(`Writing font to ${file}...`);
             fs.writeFileSync(path.join(dir, file), buffer);
             files.push(file);
@@ -953,11 +971,19 @@ export class IconMinifier {
 
     saveCss(css: string): string {
         const outputCssFolder = this.options.outputCssFolder!;
-        const outputFontFolder = this.options.outputFontFolder!;
-        const outputFilename = this.options.outputFilename!;
+        // const outputFontFolder = this.options.outputFontFolder!;
+        let outputFilename = this.options.outputFilename!;
+
+        if (this.options.cacheBust) {
+            outputFilename += '-' + md5(css).slice(0, 16);
+        }
+
         const outputFile = path.join(this.directory, outputCssFolder, outputFilename + '.css');
 
         console.log(`Writing css to ${outputFile}...`);
+        if (!fs.existsSync(path.dirname(outputFile))) {
+            fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+        }
         fs.writeFileSync(outputFile, css);
         return outputFile;
     }
