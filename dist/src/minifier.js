@@ -595,6 +595,7 @@ export class IconMinifier {
             if (opts[opt] === undefined)
                 opts[opt] = iconMinifierDefaultOptions[opt];
         }
+        console.log("Extensions: " + this.options.crawlExtensions.join(', '));
     }
     /**
      * 1. Crawl static files locating icon CSS files.
