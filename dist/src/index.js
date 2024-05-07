@@ -9,7 +9,7 @@ async function main() {
         .description('Icon Minifier CLI')
         .arguments('<directory>')
         .option('-e, --exts <extensions>', 'Specify file extensions to crawl', (value) => value.split(','))
-        .option('-c, --cache', 'Enable online file caching')
+        .option('--no-cache', 'Don\'t cache downloaded files. (Files are cached by default.)')
         .option('-o, --output-filename <filename>', 'Specify output filename')
         .option('--output-css-folder <folder>', 'Specify output CSS folder')
         .option('--output-font-folder <folder>', 'Specify output font folder')

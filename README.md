@@ -4,7 +4,7 @@ Icon Minifier is a build tool for minifying icon webfonts. These webfonts tend t
 
 SVGs are one solution to inlining icons, removing the need for icon webfonts entirely. However, I'm too lazy and haven't found the time to migrate to SVGs and deal with their pestilential sizing issues.
 
-So for now, this is a drop-in replacement which shaves off ≥98% of font/CSS bytes in [my site's](https://trebledj.me) Font-Awesome icons.
+So for now, this is a drop-in replacement which shaves off ≥95% of font/CSS bytes in [my site's](https://trebledj.me) Font-Awesome icons.
 
 This is a toy project I started on Labour Day to learn Typescript and play around with frontend optimisations. My code is jank for a few days of prototyping + refactoring so bear with me. (Suggestions welcome.)
 

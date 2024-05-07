@@ -119,7 +119,9 @@ class Icon {
             throw new Error(`Detected icon with more than one icon class: ${names.join(' ')}.`);
         }
         else if (names.length === 0) {
-            throw new Error(`Detected icon with no name: ${unparsed.join(' ')}.`);
+            // throw new Error(`Detected icon with no name: ${unparsed.join(' ')}.`);
+            console.log(`Detected icon with no name: ${unparsed.join(' ')}. (Skipping.)`);
+            return null;
         }
         const name = names[0];
         return new Icon(name, unparsed.filter(cls => cls !== name));
@@ -133,7 +135,7 @@ class Icon {
 }
 const iconMinifierDefaultOptions = Object.freeze({
     exts: ['html'],
-    cacheOnlineFiles: true,
+    cache: true,
     outputFilename: 'icons',
     outputCssFolder: './css',
     outputFontFolder: './webfonts',
@@ -158,6 +160,7 @@ class Crawler {
                 this.fileMap.get(ext).push(file);
             }
         }
+        console.log(`Indexed ${[...this.fileMap.values()].map(a => a.length).reduce((a, b) => a + b, 0)} files.`);
     }
     /**
      * Search for CSS files from <link> elements.
@@ -184,7 +187,7 @@ class Crawler {
     findIcons(prefix, exts, extraClasses = []) {
         const extra = extraClasses.length > 0 ? `|${extraClasses.join('|')}` : '';
         const clss = `((${prefix}[a-z0-9\\-]+)${extra})`;
-        const rgx = new RegExp(`\\b(${clss}(\\s+${clss})+)\\b`, 'g');
+        const rgx = new RegExp(`\\b(${clss}(\\s+${clss})*)\\b`, 'g');
         const matches = this.findByRegex(rgx, exts);
         // Sort the classes before deduplicating them.
         // We want `fab fa-google` == `fa-google fab`.
@@ -214,7 +217,7 @@ class Crawler {
             }
         }
     }
-    replaceCssLinkss(exts, oldUrl, newUrl) {
+    replaceCssLinks(exts, oldUrl, newUrl) {
         this.checkIfIndexed(exts);
         for (const ext of exts) {
             for (const file of this.fileMap.get(ext)) {
@@ -517,10 +520,10 @@ class FontManager {
             if (!newcp) {
                 newcp = newCodepoint();
                 oldCodepointsToNew.get(ff).set(codepoint, newcp);
+                // Add the glyph to our packed list.
+                g.unicode = [newcp];
+                glyfs.push(g);
             }
-            // Add the glyph to our packed list.
-            g.unicode = [newcp];
-            glyfs.push(g);
             return newcp;
         };
         const registerMapping = (newCodepoint, icon) => {
@@ -548,7 +551,8 @@ class FontManager {
                         // Clone icon and add modifier, so that a unique insertion will be made.
                         const newcp = addGlyph(ff, cp);
                         if (!newcp)
-                            throw new Error(`Could not find glyphs for ${cp.toString(16)} (${icon.name}).`);
+                            return; // It's normal if we can't find a codepoint for some glyphs. Some variants don't have codepoints for certain icons.
+                        // throw new Error(`Could not find glyphs for ${cp.toString(16)} (${icon.name}).`);
                         ff.clss.forEach(cls => {
                             const tmpIcon = icon.clone();
                             tmpIcon.modifiers.push(cls);
@@ -663,8 +667,9 @@ export class IconMinifier {
             // 4.
             const unparsedIcons = crawler.findIcons(prefix, this.options.exts, nonPrefixClasses);
             // 5.
-            const icons = unparsedIcons.map(u => Icon.parse(u, iconClasses));
+            const icons = unparsedIcons.map(u => Icon.parse(u, iconClasses)).filter(x => x !== null);
             console.log(chalk.blue(`Parsed ${icons.length} unique icons.`));
+            console.log(icons.map(icon => [icon.name, ...icon.modifiers].join('.')).sort().join(', '));
             // 6.
             const [font, newCodepointsToClasses] = await fontManager.minify(icons, iconToCodepoint);
             const fontFiles = this.generateFont(font);
@@ -676,7 +681,7 @@ export class IconMinifier {
             const newCssFile = this.saveCss(newCss);
             // 9.
             const relativeNewCssFile = path.relative(this.directory, newCssFile);
-            crawler.replaceCssLinkss(['html'], cssFile, '/' + relativeNewCssFile);
+            crawler.replaceCssLinks(['html'], cssFile, '/' + relativeNewCssFile);
             console.log("Done!");
             // 10. Stats.
             let oldFontBytes = 0;
