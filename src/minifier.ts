@@ -649,14 +649,14 @@ class FontManager {
                 return null;
             }
 
-            // Clone glyph. Don't modify the original object.
-            const g = JSON.parse(JSON.stringify(gs[0]));
-
             // Obtain the new codepoint, or make a new one if it doesn't exist.
             let newcp = oldCodepointsToNew.get(ff)!.get(codepoint);
             if (!newcp) {
                 newcp = newCodepoint();
                 oldCodepointsToNew.get(ff)!.set(codepoint, newcp);
+                
+                // Clone glyph. Don't modify the original object.
+                const g = JSON.parse(JSON.stringify(gs[0]));
                 
                 // Add the glyph to our packed list.
                 g.unicode = [newcp];
