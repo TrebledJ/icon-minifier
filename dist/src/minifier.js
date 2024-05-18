@@ -18,8 +18,8 @@ const cssCommentRemover = new CleanCSS({
 function cssRemoveComments(css) {
     return cssCommentRemover.minify(css).styles;
 }
-import { withCache } from "ultrafetch";
-const cachedFetch = withCache(fetch);
+import fetch from "node-fetch-cache";
+const cachedFetch = fetch;
 const FONT_EXTS = ['ttf', 'otf', 'eot', 'woff', 'woff2'];
 /**
  * Compute the intersection of two arrays.
@@ -513,13 +513,13 @@ class FontManager {
             if (gs.length === 0) {
                 return null;
             }
-            // Clone glyph. Don't modify the original object.
-            const g = JSON.parse(JSON.stringify(gs[0]));
             // Obtain the new codepoint, or make a new one if it doesn't exist.
             let newcp = oldCodepointsToNew.get(ff).get(codepoint);
             if (!newcp) {
                 newcp = newCodepoint();
                 oldCodepointsToNew.get(ff).set(codepoint, newcp);
+                // Clone glyph. Don't modify the original object.
+                const g = JSON.parse(JSON.stringify(gs[0]));
                 // Add the glyph to our packed list.
                 g.unicode = [newcp];
                 glyfs.push(g);

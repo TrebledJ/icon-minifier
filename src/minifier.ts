@@ -23,9 +23,9 @@ function cssRemoveComments(css: string): string {
     return cssCommentRemover.minify(css).styles;
 }
 
-import { withCache } from "ultrafetch"
+import fetch from "node-fetch-cache"
 
-const cachedFetch = withCache(fetch);
+const cachedFetch = fetch;
 const FONT_EXTS = ['ttf', 'otf', 'eot', 'woff', 'woff2'];
 
 
