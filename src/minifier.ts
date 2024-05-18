@@ -26,7 +26,6 @@ function cssRemoveComments(css: string): string {
 import fetch from "node-fetch-cache"
 
 const cachedFetch = fetch;
-const FONT_EXTS = ['ttf', 'otf', 'eot', 'woff', 'woff2'];
 
 
 /**
@@ -129,6 +128,7 @@ async function getContent(fileOrUrl: string, options?: { buffer: boolean }): Pro
 }
 
 function findPrefix(words: string[]): string {
+    // https://stackoverflow.com/a/68703218/10239789
     // check border cases size 1 array and empty first word)
     if (!words[0] || words.length == 1) return words[0] || "";
     let i = 0;
@@ -330,23 +330,6 @@ class CSSParser {
         this.ast = Parser.parse(this.contents);
         this.ffs = this.parseFontAssociations();
     }
-
-    // getIconClasses(): Set<string> {
-    //     const set: Set<string> = new Set;
-    //     for (const node of this.ast.children) {
-    //         // Get the unicode.
-    //         const grps = /\s*content:\s*"(\\[0-9a-f]+)"\s*/.exec(node.body);
-    //         if (!grps || grps.length <= 1)
-    //             continue;
-
-    //         // const unicode = grps[1];
-            
-    //         // Get the classes.
-    //         const clss = CSSParser.getClassesFromSelectorWithBefore(node.selector);
-    //         clss.forEach(cls => set.add(cls));
-    //     }
-    //     return set;
-    // }
     
     getIconToCodepoint(): Map<string, number> {
         const map: Map<string, number> = new Map;
@@ -386,25 +369,6 @@ class CSSParser {
         }
         return set;
     }
-
-    // /**
-    //  * Find font files from a given CSS file.
-    //  * This also finds associations with variant classes by matching CSS selectors with font faces.
-    //  * @returns Unique array of tuples [font files, associated font classes].
-    //  */
-    // getFontFiles(): string[] {
-    //     // Handle cases where single-quotes, double-quotes, or no quotes wrap the url.
-    //     let matches: string[] | null = this.contents.match(/\burl\((['"]?)[^'"]*?\1\)/g);
-    //     if (!matches) {
-    //         return [];
-    //     }
-
-    //     matches = matches.filter(url => {
-    //         const ext = url.split('.').pop();
-    //         return ext && ext !== url && FONT_EXTS.includes(ext);
-    //     });
-    //     return Array.from(new Set(matches));
-    // }
 
     static getRelativeFile(cssFile: string, relativeFile: string) {
         if (isRelativePath(relativeFile)) {
