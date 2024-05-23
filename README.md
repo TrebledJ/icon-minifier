@@ -8,6 +8,9 @@ So for now, this is a drop-in replacement which shaves off ≥95% of font/CSS by
 
 This is a toy project I started on Labour Day to learn Typescript and play around with frontend optimisations. My code is jank for a few days of prototyping + refactoring so bear with me. (Suggestions welcome.)
 
+> [!WARNING]  
+> Caveat: For the tool to accurately find used classes, any icon classes should be explicitly spelled out (e.g. `fa-rocket`) in HTML (or other) code.
+
 ## Features
 
 - [x] Crawl a static site (locally), hunting for icon classes in HTML and other files
